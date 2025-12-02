@@ -1,4 +1,6 @@
 # cs4337_project1
+Description:
+
 The program can run in two modes: interactive and batch. If the program is ran with the “-b” or
 “--batch” flag, then it should run in batch mode. Otherwise, it runs in interactive mode. When
 in batch mode, the only output should be the results (including errors). All other behavior is
@@ -38,3 +40,27 @@ $2 + 1, I would write +*2$1+$2 1. Whitespace can be used to divide tokens (like 
 previous example), but otherwise insignificant. The previous example could also be written as +
 *2 \$1 + \$2 1. It is an error, if the expression is evaluated, but there is still text remaining. For
 instance, +1 2 2 is an error. The expression is 1 + 2. The second 2 is not part of the expression.
+
+Files:
+prefix-calculator.rkt - Executable to is the prefix calculator implementation
+batch-input.txt - Test file that was used to test 
+batch-output.txt - Outfile file from test
+batch-test.rkt - Test file used to test on windows machine with my paths on my PC 
+batch-test2.rkt - Backup test file
+
+
+Testing on Linux:
+Interactive mode Command:
+racket prefix-calculator.rkt
+
+
+Batch mode command:
+racket prefix-calculator.rkt --batch < <testinput File>
+
+Example
+{cslinux1:~/cs4337-project1} racket prefix-calculator.rkt --batch < batch-input.txt
+1: 5.0
+2: 16.0
+
+
+Implemented all requirements.
