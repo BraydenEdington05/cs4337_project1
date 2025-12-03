@@ -22,13 +22,13 @@
        (string=? (substring str 0 (string-length prefix)) prefix)))
 
 ;; List of valid operators
-(define valid-operators (list '+ '- '* '/))
+(define valid-operators (list '+ '* '/))
 
 ;; Helper function to apply an operator safely
 (define (apply-operator op operand1 operand2)
   (cond
     [(eq? op '+) (+ operand1 operand2)]
-    [(eq? op '-) (- operand1 operand2)]
+;;    [(eq? op '-) (- operand1 operand2)]
     [(eq? op '*) (* operand1 operand2)]
     [(eq? op '/) (/ operand1 operand2)]
     [else (error 'apply-operator "Invalid operator")]))
@@ -65,6 +65,40 @@
 ;; ====================================================================
 
 
+(define (tokenize s)
+  (define n (string-length s))
+  (define (loop i acc)
+    (if (>= i n)
+      (reverse acc)
+      (let ([c (string-ref s i)])
+	(cond
+	  ;; ignore whitespace
+	  [(char-whitespace? c)
+	   (loop (+ i 1) acc)] 
+	  
+	  [(or (char=? c #\+) (char=? c #\*) (char=? c #\/))
+	   (loop (+ i 1) (cons (string c) acc))] 
+	  
+	  [(char=? c #\$) 
+	   (let loop-num ([j (+ i 1)] [buf ""])
+	     (if (and (< j n) (char-numeric? (string-ref s j)))
+	       (loop-num (+ j 1) (string-append buf (string (string-ref s j))))
+	       (if (zero? (string-length buf))
+		 (error 'tokenize "Invalid $ token")
+		 (loop j (cons (string-append "$" buf) acc)))))]
+	  ;; numbers (optional leading minus)
+	  [(or (char-numeric? c) (char=? c #\-))
+	   (let loop-num ([j i] [buf ""])
+	     (if (and (< j n)
+		      (or (char-numeric? (string-ref s j))
+			  (and (char=? (string-ref s j) #\-) (= j i))))
+		   (loop-num (+ j 1) (string-append buf (string (string-ref s j))))
+		   (loop j (cons buf acc))))]
+	  ;; unknown character
+
+	  [else (error 'tokenize (format "Unknown character: ~a" c))]))))
+  (loop 0 '()))
+
 
 ;; Evaluates a prefix expression given as a list of tokens.
 ;; Returns a pair: (result . remaining-tokens)
@@ -83,7 +117,7 @@
           ;; 2. Handle History References ($N)
           [(and (string? token) 
                 (string-prefix? "$" token) 
-                (string->number (substring token 1)))
+                (regexp-match #px"^[0-9]+$" (substring token 1)))
            (let ([id (string->number (substring token 1))])
              (if (valid-history-id? id history)
                  (cons (get-history-value id history) rest)
@@ -115,26 +149,23 @@
 ;; The wrapper function that handles tokenization and error catching.
 ;; Returns (result . new-history) on success, or #f on failure.
 (define (evaluate-expression input history)
-  (define tokens (regexp-split #px"\\s+" (string-trim input))) 
-  
-  ;; Filter out any empty strings that might result from splitting (e.g., from double spaces)
-  (define clean-tokens (filter (lambda (s) (not (zero? (string-length s)))) tokens))
+  (with-handlers ([exn:fail? (lambda (ex) #f)])
+    (define tokens (tokenize (string-trim input)))
 
-  (with-handlers 
-      ([exn:fail? (lambda (ex) #f)])
-    
+    ;; filter out empty strings
+    (define clean-tokens (filter (lambda (s) (not (zero? (string-length s)))) tokens))
+
     (if (null? clean-tokens)
-        #f ; Handle completely empty or whitespace input
-        
-        (let ([eval-pair (evaluate-tokens clean-tokens history)])
-          (define result (car eval-pair))
-          (define remaining-tokens (cdr eval-pair))
-          
-          ;; Check for successful evaluation: one result and no remaining tokens
-          (if (null? remaining-tokens)
-              (cons result (cons result history)) 
-              #f)))) 
-)
+      #f ; empty input
+      (let ([eval-pair (evaluate-tokens clean-tokens history)])
+	(define result (car eval-pair))
+	(define remaining-tokens (cdr eval-pair))
+
+	;; check that no tokens remain
+	(if (null? remaining-tokens)
+	  (cons result (cons result history))
+	  #f)))))
+  
 (define (main-calculator-loop history)
   
   ;; 1. Prompt and Read Input (only in interactive mode)

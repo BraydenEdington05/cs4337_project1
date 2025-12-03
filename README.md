@@ -47,7 +47,11 @@ batch-input.txt - Test file that was used to test
 batch-output.txt - Outfile file from test
 batch-test.rkt - Test file used to test on windows machine with my paths on my PC 
 batch-test2.rkt - Backup test file
-
+test1.txt - first test case
+test2.txt - second test case
+test3.txt - third test case
+test4.txt - fourth test case
+test5.txt - fifth test case
 
 Testing on Linux:
 Interactive mode Command:

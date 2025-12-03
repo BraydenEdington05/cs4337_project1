@@ -1,0 +1,5 @@
+$1
+Hello, this should be an error
+/5 2
+-5 4
+quit
